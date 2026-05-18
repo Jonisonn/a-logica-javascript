@@ -21,44 +21,31 @@
         }
 
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; padding: 20px; display: flex; justify-content: center; margin: 0; }
-        
         .container { max-width: 800px; width: 100%; background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        
         h2 { text-align: center; color: var(--text-main); font-weight: 600; margin-bottom: 25px; }
-        
         .status-bar { display: flex; justify-content: space-between; background: #f5f5f7; padding: 12px 20px; border-radius: 8px; font-weight: 500; font-size: 0.95rem; margin-bottom: 25px; border: 1px solid #e3e3e8; }
-        
         .code-container { position: relative; margin: 20px 0; }
-        
         pre { background-color: var(--code-bg); color: var(--code-text); padding: 25px; border-radius: 8px; font-size: 1.1rem; overflow-x: auto; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); margin: 0; }
-        
         .lacuna { background: #333; color: #fff; width: 80px; padding: 4px 8px; font-size: 1.1rem; font-family: 'Courier New', Courier, monospace; text-align: center; border: 2px solid #555; border-radius: 4px; outline: none; transition: all 0.2s; }
         .lacuna:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,113,227,0.3); }
         .correto { background-color: rgba(40, 167, 69, 0.2); border-color: var(--success); color: #a8e6cf; }
         .errado { background-color: rgba(220, 53, 69, 0.2); border-color: var(--error); color: #ffb3ba; }
         .revelado { background-color: rgba(108, 117, 125, 0.2); border-color: var(--secondary); color: #e2e3e5; }
-        
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        
         button { flex: 1; background-color: var(--primary); color: white; border: none; padding: 14px 20px; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
         button:hover { background-color: var(--primary-hover); }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
-        
         #btn-ver-resposta { background-color: var(--secondary); }
         #btn-ver-resposta:hover { background-color: var(--secondary-hover); }
-        
         #btn-proximo { background-color: var(--success); display: none; }
         #btn-proximo:hover { background-color: #218838; }
-        
         .feedback-box { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; font-weight: 500; }
         .feedback-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .feedback-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .feedback-info { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
-        
         .exemplo-code { display: block; background: rgba(0,0,0,0.05); padding: 8px; margin-top: 8px; border-radius: 4px; font-family: monospace; font-weight: normal; }
-        
         .ranking-box { background: #fff3cd; color: #856404; padding: 20px; border-radius: 8px; margin-top: 25px; border: 1px solid #ffeeba; text-align: center; }
-
+        
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; display: none; }
         .modal-content { background: var(--card-bg); padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
@@ -73,30 +60,24 @@
 
     <div class="container">
         <h2>Treinamento: Lógica de Programação</h2>
-        
         <div class="status-bar">
             <span id="display-nivel">Questão: 1 / 5</span>
             <span id="display-pontos">Pontos: 0</span>
             <span id="display-recorde">Recorde: Carregando...</span>
         </div>
-
         <div id="area-jogo">
             <h3 id="titulo-fase"></h3>
             <p id="descricao-fase" style="color: var(--text-light);"></p>
-            
             <div class="code-container">
                 <pre id="codigo-fase"></pre>
             </div>
-            
             <div id="feedback" class="feedback-box"></div>
-
             <div class="btn-group">
                 <button id="btn-verificar" onclick="verificarRespostas()">Testar Código</button>
                 <button id="btn-ver-resposta" onclick="revelarResposta()">Ver Resposta</button>
                 <button id="btn-proximo" onclick="carregarProximoNivel()">Avançar ➔</button>
             </div>
         </div>
-
         <div id="area-final" style="display: none; text-align: center;">
             <h3>Sessão Concluída!</h3>
             <p style="font-size: 1.2rem; margin: 20px 0;">Sua pontuação final: <strong id="pontos-finais"></strong></p>
@@ -115,23 +96,55 @@
     </div>
 
     <script>
-        // Banco de questões expandido com explicações e exemplos
+        // --- MOTOR DE ÁUDIO (Sintetizador Web Audio API) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playTone(freq, type, duration, vol = 0.1) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sfx = {
+            success: () => {
+                playTone(523.25, 'sine', 0.1); // C5
+                setTimeout(() => playTone(659.25, 'sine', 0.2), 100); // E5
+            },
+            error: () => playTone(150, 'sawtooth', 0.3, 0.2), // Som de 'buzz'
+            reveal: () => playTone(300, 'triangle', 0.2, 0.1), // Som neutro
+            record: () => {
+                playTone(440, 'sine', 0.1); setTimeout(() => playTone(554.37, 'sine', 0.1), 100);
+                setTimeout(() => playTone(659.25, 'sine', 0.3), 200);
+            }
+        };
+        // ----------------------------------------------------
+
         const bancoDeQuestoes = [
             { titulo: "Saída de Dados", descricao: "Exiba um alerta na tela.", codigo: `<input type="text" class="lacuna" data-resp="alert">("Olá Mundo!");`, dica: "Em JavaScript, usamos a função alert() para abrir uma caixa de diálogo.", explicacao: "O comando alert() serve para exibir uma mensagem simples ao usuário em uma janela sobreposta.", exemplo: 'alert("Fim de Jogo!");', pontos: 10 },
             { titulo: "Entrada de Dados", descricao: "Capture um texto digitado pelo usuário.", codigo: `let nome = <input type="text" class="lacuna" data-resp="prompt">("Digite seu nome:");`, dica: "A função prompt() solicita que o usuário insira um dado através de uma caixa de texto.", explicacao: "O comando prompt() abre uma janela com um campo de texto, permitindo coletar dados do teclado.", exemplo: 'let idade = prompt("Qual sua idade?");', pontos: 10 },
-            { titulo: "Declaração de Variáveis", descricao: "Crie uma variável que não pode ter seu valor alterado.", codigo: `<input type="text" class="lacuna" data-resp="const"> PI = 3.1415;`, dica: "Utilize 'const' para declarar constantes, ou seja, variáveis cujo valor é imutável.", explicacao: "A palavra-chave const declara uma variável cujo valor não pode ser reatribuído depois.", exemplo: 'const limiteDeVidas = 3;', pontos: 10 },
-            { titulo: "Tipos de Dados", descricao: "Verifique o tipo da variável.", codigo: `console.log(<input type="text" class="lacuna" data-resp="typeof"> "Texto"); // Retorna 'string'`, dica: "O operador typeof retorna uma string indicando o tipo do operando.", explicacao: "typeof é usado para descobrir se um valor é um número, texto (string) ou booleano (true/false).", exemplo: 'typeof 10; // Resulta em "number"', pontos: 15 },
-            { titulo: "Condicional Básica", descricao: "Estrutura SE / SENÃO.", codigo: `if (idade >= 18) {\n  liberar();\n} <input type="text" class="lacuna" data-resp="else"> {\n  bloquear();\n}`, dica: "O bloco 'else' é executado quando a condição do 'if' for falsa.", explicacao: "O 'else' (senão) é o caminho alternativo que o código segue quando a condição do 'if' (se) não é atendida.", exemplo: 'if (choveu) {\n  pegarGuardaChuva();\n} else {\n  irDeOculosDeSol();\n}', pontos: 15 },
+            { titulo: "Declaração de Variáveis", descricao: "Crie uma variável que não pode ter seu valor alterado.", codigo: `<input type="text" class="lacuna" data-resp="const"> PI = 3.1415;`, dica: "Utilize 'const' para declarar constantes.", explicacao: "A palavra-chave const declara uma variável cujo valor não pode ser reatribuído depois.", exemplo: 'const limiteDeVidas = 3;', pontos: 10 },
+            { titulo: "Tipos de Dados", descricao: "Verifique o tipo da variável.", codigo: `console.log(<input type="text" class="lacuna" data-resp="typeof"> "Texto"); // Retorna 'string'`, dica: "O operador typeof retorna uma string indicando o tipo do operando.", explicacao: "typeof é usado para descobrir se um valor é um número, texto ou booleano.", exemplo: 'typeof 10; // Resulta em "number"', pontos: 15 },
+            { titulo: "Condicional Básica", descricao: "Estrutura SE / SENÃO.", codigo: `if (idade >= 18) {\n  liberar();\n} <input type="text" class="lacuna" data-resp="else"> {\n  bloquear();\n}`, dica: "O bloco 'else' é executado quando a condição do 'if' for falsa.", explicacao: "O 'else' (senão) é o caminho alternativo que o código segue quando a condição do 'if' não é atendida.", exemplo: 'if (choveu) { pegarGuardaChuva(); } else { irDeOculosDeSol(); }', pontos: 15 },
             { titulo: "Condicional Encadeada", descricao: "Estrutura SE / SENÃO SE.", codigo: `if (nota === 10) {\n  top();\n} <input type="text" class="lacuna" data-resp="else if"> (nota >= 6) {\n  passou();\n}`, dica: "Use 'else if' para testar uma nova condição caso a primeira falhe.", explicacao: "O 'else if' permite encadear várias verificações lógicas seguidas.", exemplo: 'if (sinal == "vermelho") { ... } else if (sinal == "amarelo") { ... }', pontos: 20 },
-            { titulo: "Operadores Lógicos (E)", descricao: "O usuário precisa de login E senha corretos.", codigo: `if (loginCorreto <input type="text" class="lacuna" data-resp="&&"> senhaCorreta) {\n  entrar();\n}`, dica: "O operador lógico AND em JavaScript é representado por &&.", explicacao: "O operador && exige que as duas condições sejam verdadeiras ao mesmo tempo para o bloco ser executado.", exemplo: 'if (temIngresso && maiorDeIdade) { liberarEntrada(); }', pontos: 15 },
-            { titulo: "Operadores Lógicos (OU)", descricao: "Acesso grátis se for estudante OU idoso.", codigo: `if (estudante <input type="text" class="lacuna" data-resp="||"> idoso) {\n  passeLivre();\n}`, dica: "O operador lógico OR em JavaScript é representado por || (dois pipes).", explicacao: "O operador || (Ou) precisa que apenas uma das condições seja verdadeira.", exemplo: 'if (ehSabado || ehDomingo) { descansar(); }', pontos: 15 },
-            { titulo: "Igualdade Estrita", descricao: "Verifique se o valor E o tipo são idênticos.", codigo: `if (numero <input type="text" class="lacuna" data-resp="==="> 5) {\n  // Verdadeiro apenas se for o número 5\n}`, dica: "O operador === verifica igualdade de valor e de tipo.", explicacao: "O === (triplo igual) garante que o sistema não confunda o número 5 com o texto '5'.", exemplo: '5 === 5 // true\n5 === "5" // false', pontos: 20 },
-            { titulo: "Estrutura Switch", descricao: "Defina o caso padrão se nenhum outro for atendido.", codigo: `switch(cor) {\n  case "azul": \n    break;\n  <input type="text" class="lacuna" data-resp="default">:\n    erro();\n}`, dica: "A cláusula 'default' é executada se nenhum 'case' for correspondido.", explicacao: "O 'default' atua como o 'else' dentro de uma estrutura switch, pegando as opções não mapeadas.", exemplo: 'switch(botao) {\n  case "A": pular(); break;\n  default: ficarParado();\n}', pontos: 20 },
             { titulo: "Laço de Repetição (For)", descricao: "Incremente a variável 'i' a cada passo.", codigo: `for (let i = 0; i < 10; <input type="text" class="lacuna" data-resp="i++">) {\n  processar(i);\n}`, dica: "Use i++ para incrementar a variável em 1.", explicacao: "O i++ é um atalho prático que significa 'pegue a variável i e adicione 1 a ela'.", exemplo: 'let i = 0;\ni++; // Agora i vale 1', pontos: 25 },
-            { titulo: "Laço de Repetição (While)", descricao: "Execute ENQUANTO a vida for maior que zero.", codigo: `<input type="text" class="lacuna" data-resp="while"> (vida > 0) {\n  lutar();\n}`, dica: "A instrução 'while' cria um laço que executa enquanto a condição de teste for verdadeira.", explicacao: "A estrutura while repete um bloco indefinidamente até que sua condição se torne falsa.", exemplo: 'while (temFome) {\n  comer();\n}', pontos: 20 },
-            { titulo: "Funções", descricao: "Devolva o valor processado para quem chamou a função.", codigo: `function somar(a, b) {\n  <input type="text" class="lacuna" data-resp="return"> a + b;\n}`, dica: "A palavra-chave 'return' finaliza a função e especifica o valor a ser retornado.", explicacao: "O 'return' é a forma de uma função devolver o resultado do seu processamento para o programa.", exemplo: 'function dobrar(x) {\n  return x * 2;\n}', pontos: 20 },
-            { titulo: "Arrays (Adicionar)", descricao: "Adicione um item ao final do array.", codigo: `listaDeCompras.<input type="text" class="lacuna" data-resp="push">("Maçã");`, dica: "O método push() adiciona elementos ao final da lista.", explicacao: "O método .push() funciona como 'empurrar' um novo item para a última posição de uma lista (array).", exemplo: 'let itens = ["Espada"];\nitens.push("Escudo");', pontos: 25 },
-            { titulo: "Tamanho do Array", descricao: "Descubra a quantidade de itens na lista.", codigo: `let qtd = listaDeCompras.<input type="text" class="lacuna" data-resp="length">;`, dica: "A propriedade length retorna o número de elementos.", explicacao: "A propriedade .length mede o comprimento da lista, ou seja, quantos itens existem nela.", exemplo: 'let nums = [10, 20];\nnums.length; // Retorna 2', pontos: 20 }
+            { titulo: "Arrays (Adicionar)", descricao: "Adicione um item ao final do array.", codigo: `listaDeCompras.<input type="text" class="lacuna" data-resp="push">("Maçã");`, dica: "O método push() adiciona elementos ao final da lista.", explicacao: "O método .push() funciona como 'empurrar' um novo item para a última posição de uma lista (array).", exemplo: 'let itens = ["Espada"];\nitens.push("Escudo");', pontos: 25 }
         ];
 
         let questoesDaSessao = [];
@@ -178,6 +191,7 @@
         }
 
         function verificarRespostas() {
+            initAudio(); // Garante que o motor de áudio inicie no clique do usuário
             let acertos = 0;
             let inputs = document.querySelectorAll('.lacuna');
             const fase = questoesDaSessao[nivelAtual];
@@ -199,6 +213,7 @@
             feedbackMsg.style.display = 'block';
             
             if (acertos === inputs.length) {
+                sfx.success();
                 pontuacao += fase.pontos;
                 atualizarPlacar();
                 
@@ -207,12 +222,15 @@
                 
                 avancarBotoes();
             } else {
+                sfx.error();
                 feedbackMsg.className = 'feedback-box feedback-error';
                 feedbackMsg.innerHTML = `<strong>Incorreto.</strong> Dica: ${fase.dica}`;
             }
         }
 
         function revelarResposta() {
+            initAudio();
+            sfx.reveal();
             const fase = questoesDaSessao[nivelAtual];
             let inputs = document.querySelectorAll('.lacuna');
             
@@ -226,12 +244,7 @@
             let feedbackMsg = document.getElementById('feedback');
             feedbackMsg.style.display = 'block';
             feedbackMsg.className = 'feedback-box feedback-info';
-            
-            feedbackMsg.innerHTML = `
-                <strong>Resposta Revelada (0 pontos)</strong><br>
-                ${fase.explicacao}<br>
-                <span class="exemplo-code">Ex: ${fase.exemplo}</span>
-            `;
+            feedbackMsg.innerHTML = `<strong>Resposta Revelada (0 pontos)</strong><br>${fase.explicacao}<br><span class="exemplo-code">Ex: ${fase.exemplo}</span>`;
 
             avancarBotoes();
         }
@@ -266,6 +279,7 @@
             let divRanking = document.getElementById('area-ranking');
             
             if (pontuacao > recordeAtual && pontuacao > 0) {
+                sfx.record();
                 divRanking.innerHTML = `<strong>🏆 Novo Recorde!</strong><br>Você superou os ${recordeAtual} pontos de ${nomeRecordista}.`;
                 
                 let modal = document.getElementById('modal-recorde');
