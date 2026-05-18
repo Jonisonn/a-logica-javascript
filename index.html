@@ -339,6 +339,15 @@
             
             document.getElementById('modal-recorde').style.display = 'none';
         }
+        function reiniciarJogo() {
+            iniciarJogo();
+            
+            // Garante que o foco volte para a lacuna ao reiniciar
+            setTimeout(() => {
+                const primeiraLacuna = document.querySelector('.lacuna');
+                if(primeiraLacuna) primeiraLacuna.focus();
+            }, 100);
+        }
 
         // Listener global para a tecla Enter
         document.addEventListener('keypress', function(e) {
