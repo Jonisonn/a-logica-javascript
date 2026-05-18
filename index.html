@@ -46,13 +46,19 @@
         .exemplo-code { display: block; background: rgba(0,0,0,0.05); padding: 8px; margin-top: 8px; border-radius: 4px; font-family: monospace; font-weight: normal; }
         .ranking-box { background: #fff3cd; color: #856404; padding: 20px; border-radius: 8px; margin-top: 25px; border: 1px solid #ffeeba; text-align: center; }
         
-        /* Modal */
+        /* Modais */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; display: none; }
         .modal-content { background: var(--card-bg); padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
+        .modal-content.tutorial { max-width: 500px; text-align: left; }
         .modal-content h3 { margin-top: 0; color: var(--text-main); }
         .modal-content p { color: var(--text-light); font-size: 0.95rem; margin-bottom: 20px; }
         .modal-content input { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e3e3e8; border-radius: 8px; font-size: 1rem; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: inherit; }
         .modal-content input:focus { border-color: var(--primary); }
+        
+        .tutorial-list { padding-left: 20px; color: var(--text-light); font-size: 0.95rem; margin-bottom: 25px; }
+        .tutorial-list li { margin-bottom: 12px; }
+        .tutorial-list strong { color: var(--text-main); }
+
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
@@ -83,6 +89,22 @@
             <p style="font-size: 1.2rem; margin: 20px 0;">Sua pontuação final: <strong id="pontos-finais"></strong></p>
             <div id="area-ranking" class="ranking-box"></div>
             <button onclick="reiniciarJogo()" style="margin-top: 20px;">Nova Sessão</button>
+        </div>
+    </div>
+
+    <div id="modal-tutorial" class="modal-overlay" style="display: flex;">
+        <div class="modal-content tutorial">
+            <h3 style="text-align: center;">Bem-vindo ao Desafio! 🚀</h3>
+            <p style="text-align: center;">Este é um ambiente prático para treinar fundamentos e lógica em <strong>JavaScript</strong>.</p>
+            
+            <ul class="tutorial-list">
+                <li><strong>Como jogar:</strong> Leia a instrução e preencha as lacunas vazias no código com a sintaxe correta.</li>
+                <li><strong>Avançando:</strong> Clique em "Testar Código" ou aperte <em>Enter</em>. Respostas corretas somam pontos à sua nota.</li>
+                <li><strong>Dificuldade:</strong> Se não souber a resposta, use o botão "Ver Resposta". Você não ganha os pontos da questão, mas recebe a explicação para aprender e avançar.</li>
+                <li><strong>O Objetivo:</strong> Termine a sessão de 5 perguntas com a maior pontuação possível para gravar seu nome no recorde local!</li>
+            </ul>
+
+            <button onclick="fecharTutorial()" style="width: 100%;">Entendi, começar desafio!</button>
         </div>
     </div>
 
@@ -124,11 +146,11 @@
 
         const sfx = {
             success: () => {
-                playTone(523.25, 'sine', 0.1); // C5
-                setTimeout(() => playTone(659.25, 'sine', 0.2), 100); // E5
+                playTone(523.25, 'sine', 0.1); 
+                setTimeout(() => playTone(659.25, 'sine', 0.2), 100); 
             },
-            error: () => playTone(150, 'sawtooth', 0.3, 0.2), // Som de 'buzz'
-            reveal: () => playTone(300, 'triangle', 0.2, 0.1), // Som neutro
+            error: () => playTone(150, 'sawtooth', 0.3, 0.2), 
+            reveal: () => playTone(300, 'triangle', 0.2, 0.1), 
             record: () => {
                 playTone(440, 'sine', 0.1); setTimeout(() => playTone(554.37, 'sine', 0.1), 100);
                 setTimeout(() => playTone(659.25, 'sine', 0.3), 200);
@@ -171,6 +193,13 @@
             carregarFase();
         }
 
+        function fecharTutorial() {
+            document.getElementById('modal-tutorial').style.display = 'none';
+            initAudio(); // Inicializa o contexto de áudio após o primeiro clique do usuário
+            const primeiraLacuna = document.querySelector('.lacuna');
+            if(primeiraLacuna) primeiraLacuna.focus();
+        }
+
         function carregarFase() {
             const fase = questoesDaSessao[nivelAtual];
             document.getElementById('titulo-fase').innerText = fase.titulo;
@@ -185,13 +214,10 @@
             let feedback = document.getElementById('feedback');
             feedback.style.display = 'none';
             feedback.className = 'feedback-box';
-
-            const primeiraLacuna = document.querySelector('.lacuna');
-            if(primeiraLacuna) primeiraLacuna.focus();
         }
 
         function verificarRespostas() {
-            initAudio(); // Garante que o motor de áudio inicie no clique do usuário
+            initAudio(); 
             let acertos = 0;
             let inputs = document.querySelectorAll('.lacuna');
             const fase = questoesDaSessao[nivelAtual];
@@ -262,6 +288,8 @@
             nivelAtual++;
             if (nivelAtual < totalQuestoesPorSessao) {
                 carregarFase();
+                const primeiraLacuna = document.querySelector('.lacuna');
+                if(primeiraLacuna) primeiraLacuna.focus();
             } else {
                 finalizarJogo();
             }
@@ -312,14 +340,25 @@
             document.getElementById('modal-recorde').style.display = 'none';
         }
 
+        // Listener global para a tecla Enter
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                let modal = document.getElementById('modal-recorde');
-                if (modal.style.display === 'flex') {
+                
+                // Trata a modal de tutorial
+                let modalTutorial = document.getElementById('modal-tutorial');
+                if (modalTutorial.style.display === 'flex') {
+                    fecharTutorial();
+                    return;
+                }
+
+                // Trata a modal de recorde
+                let modalRecorde = document.getElementById('modal-recorde');
+                if (modalRecorde.style.display === 'flex') {
                     salvarRecorde();
                     return;
                 }
 
+                // Trata o fluxo do jogo
                 const btnVerificar = document.getElementById('btn-verificar');
                 const btnProximo = document.getElementById('btn-proximo');
                 
